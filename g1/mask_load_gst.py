@@ -9,11 +9,11 @@ gi.require_version('GstVideo', '1.0')
 from gi.repository import Gst
 from gi.repository import Gtk
 from gi.repository import GObject, GstVideo, GLib
-import cairo
+import sys
 import cv2
 import numpy as np
 
-Gst.init()
+Gst.init(sys.argv[1:])
 
 
 def set_window_title(name, title):
@@ -129,12 +129,15 @@ def draw_overlay_cb(overlay, context, timestamp, duration):
 """
     
 
-pipeline = 'filesrc location=./vid.webm ! decodebin name=dec ! aspectratiocrop aspect-ratio=1/1  ! videoconvert ! videoscale  ! video/x-raw,width=512,height=512   ! cairooverlay name=tensor_res ! autovideosink'
+# pipeline = 'filesrc location=./vid.webm ! decodebin name=dec ! aspectratiocrop aspect-ratio=1/1  ! videoconvert ! videoscale  ! video/x-raw,width=512,height=512   ! cairooverlay name=tensor_res ! autovideosink'
+# pipeline = 'filesrc location=./j_scan.mp4 ! decodebin name=dec ! aspectratiocrop aspect-ratio=1/1  ! videoconvert ! videoscale  ! video/x-raw,width=512,height=512   ! cairooverlay name=tensor_res ! autovideosink'
 
+pipeline = 'filesrc location=./j_scan.mp4 ! decodebin name=dec ! aspectratiocrop aspect-ratio=1/1  ! videoconvert ! videoscale  ! video/x-raw,width=512,height=512  ! ximagesink'
+print(Gst)
 
 # loop = GLib.MainLoop()
 pipeline = Gst.parse_launch(pipeline)
-src_vid = pipeline.get_by_name('src_vid')
+src_vid = pipeline.get_by_name('dec')
 print(type(src_vid))
 tensor_res = pipeline.get_by_name('tensor_res')
 print(type(tensor_res))
