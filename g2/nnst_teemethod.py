@@ -14,6 +14,8 @@ from gi.repository import GObject, GstVideo, GLib
 import sys
 import cv2
 import numpy as np
+gi.require_foreign('cairo')
+
 
 Gst.init(sys.argv[1:])
 tensor_result = np.array([])
