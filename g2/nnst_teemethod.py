@@ -1,4 +1,14 @@
-#!/usr/bin/env python
+#####!/usr/bin
+#/env python
+
+
+import os
+import tensorflow
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
+#os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+#os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 import gi
 import cairo
@@ -14,8 +24,8 @@ from gi.repository import GObject, GstVideo, GLib
 import sys
 import cv2
 import numpy as np
+import time
 gi.require_foreign('cairo')
-
 
 Gst.init(sys.argv[1:])
 tensor_result = np.array([])
@@ -40,7 +50,7 @@ def new_data_cb(sink, buffer):
            content_arr = np.frombuffer(mapinfo_content.data, dtype=np.float32)
            tensor_result = np.reshape(content_arr, (-1, 128)) 
            g_tensor_result = tensor_result
-           cv2.imwrite('./result/img_{}.png'.format(g_cnt), np.reshape(content_arr, (-1, 128))*255)
+           #cv2.imwrite('./result/img_{}.png'.format(g_cnt), np.reshape(content_arr, (-1, 128))*255)
            g_cnt += 1
         # if result:
         #     if mapinfo_content.size == expected_size * 4:
@@ -63,9 +73,12 @@ def draw_overlay_cb(overlay, context, timestamp, duration):
     if running:
         buf = (g_tensor_result > 0.5).astype(np.uint8) * 255
         context.set_source_rgb(1.0, 0, 0)
-        print(buf.shape)
+        print("buf shape", buf.shape)
+        buf = cv2.resize(buf, dsize=(512,512))
         source = cairo.ImageSurface.create_for_data(
-            buf, cairo.FORMAT_A8, 128, 128)
+            buf, cairo.FORMAT_A8, 512, 512)
+        #source = cairo.ImageSurface.create_for_data(
+        #    buf, cairo.FORMAT_A8, 128, 128)
         context.mask_surface(source, 0, 0)
         context.fill()
 
@@ -83,14 +96,25 @@ def draw_overlay_cb(overlay, context, timestamp, duration):
 #     data, cairo.FORMAT_ARGB32, width, height)
 
 
+#pipeline_str = \
+#    'filesrc location=/home/j/paarthurnax/g2/j_scan.mp4 ! \
+#    decodebin ! videoconvert ! videocrop top=490 bottom=360 left=900 right=990 ! videoscale ! video/x-raw,width=128,height=128,format=RGB ! tee name=t_raw \
+#        t_raw. ! queue ! videoconvert ! cairooverlay name=tensor_res ! ximagesink name=img_tensor \
+#        t_raw. ! queue leaky=2 max-size-buffers=2 ! videoscale ! video/x-raw,width=128,height=128 ! \
+#            tensor_converter ! tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
+#            tensor_filter framework=tensorflow2-lite model=/home/j/paarthurnax/g2/unet.tflite ! \
+#            tensor_sink name=tensor_sink'
+
 pipeline_str = \
     'filesrc location=/home/j/paarthurnax/g2/j_scan.mp4 ! \
-    decodebin ! videoconvert ! videocrop top=490 bottom=360 left=900 right=990 ! videoscale ! video/x-raw,width=128,height=128,format=RGB ! tee name=t_raw \
+    decodebin ! videoconvert ! videocrop top=490 bottom=360 left=900 right=990 ! videoscale ! video/x-raw,width=512,height=512,format=RGB ! tee name=t_raw \
         t_raw. ! queue ! videoconvert ! cairooverlay name=tensor_res ! ximagesink name=img_tensor \
         t_raw. ! queue leaky=2 max-size-buffers=2 ! videoscale ! video/x-raw,width=128,height=128 ! \
             tensor_converter ! tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
             tensor_filter framework=tensorflow2-lite model=/home/j/paarthurnax/g2/unet.tflite ! \
             tensor_sink name=tensor_sink'
+
+
 
 pipeline = Gst.parse_launch(pipeline_str)
 
@@ -100,6 +124,7 @@ tensor_res = pipeline.get_by_name('tensor_res')
 tensor_res.connect('draw', draw_overlay_cb)
 
 pipeline.set_state(Gst.State.PLAYING)
+s_time = time.time()
 running = True
 
 bus = pipeline.get_bus()
@@ -109,4 +134,8 @@ msg = bus.timed_pop_filtered(
 )
 
 running = False
+time_delta = time.time() - s_time
+print("time :", time_delta)
+print("fps :", g_cnt / time_delta)
+print(g_cnt)
 pipeline.set_state(Gst.State.NULL)
