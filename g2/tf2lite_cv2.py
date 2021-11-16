@@ -15,6 +15,7 @@ output_details = interpreter.get_output_details()
 
 height = input_details[0]['shape'][1]
 width = input_details[0]['shape'][2]
+
 print(height, width)
 #img = Image.open(args.image).resize((width, height))
 

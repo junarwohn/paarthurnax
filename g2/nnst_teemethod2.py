@@ -3,10 +3,9 @@
 
 
 import os
-import tensorflow
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+#os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+#os.environ["CUDA_VISIBLE_DEVICES"]="0"
 #os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 #os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
@@ -40,7 +39,7 @@ def new_data_cb(sink, buffer):
     global g_buffer_content
     global g_tensor_result
     if running:
-        print(buffer.n_memory())
+        print("buffer", buffer.n_memory())
         buffer_content = buffer.get_memory(0)
         g_buffer_content = buffer_content
         result, mapinfo_content = buffer_content.map(Gst.MapFlags.READ)
@@ -70,11 +69,14 @@ def new_data_cb(sink, buffer):
 
 def draw_overlay_cb(overlay, context, timestamp, duration):
     global g_data
-    if running:
+    if running :
+        if g_tensor_result == 0:
+            print("NO", g_tensor_result)
+            return 
         buf = (g_tensor_result > 0.995).astype(np.uint8) * 255
         context.set_source_rgb(1.0, 0, 0)
         print("buf shape", buf.shape)
-        buf = cv2.resize(buf, dsize=(512,512))
+        buf = cv2.resize(np.array(buf), dsize=(512,512))
         source = cairo.ImageSurface.create_for_data(
             buf, cairo.FORMAT_A8, 512, 512)
         #source = cairo.ImageSurface.create_for_data(
@@ -106,12 +108,12 @@ def draw_overlay_cb(overlay, context, timestamp, duration):
 #            tensor_sink name=tensor_sink'
 
 pipeline_str = \
-    'filesrc location=/home/j/paarthurnax/g2/face.mp4 ! \
+    '-v filesrc location=/home/j/paarthurnax/g2/face.mp4 ! \
     decodebin ! videoconvert ! videoscale ! video/x-raw,width=512,height=512,format=RGB ! tee name=t_raw \
         t_raw. ! queue ! videoconvert ! cairooverlay name=tensor_res ! ximagesink name=img_tensor \
-        t_raw. ! queue leaky=2 max-size-buffers=2 ! videoscale ! video/x-raw,width=256 ,height=256 ! \
+        t_raw. ! queue leaky=2 max-size-buffers=2 ! videoscale ! video/x-raw,width=128,height=128 ! \
             tensor_converter ! tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
-            tensor_filter framework=tensorflow2-lite model=/home/j/paarthurnax/g2/face_unet.tflite ! \
+            tensor_filter framework=tensorflow model=/home/j/paarthurnax/g2/my_model/saved_model.pb input=1:128:128:3 inputname=input_2 inputtype=float32 outputype=float32 outputname=conv2d_transpose_4! \
             tensor_sink name=tensor_sink'
 
 
