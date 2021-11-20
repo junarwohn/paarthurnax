@@ -108,6 +108,7 @@ def draw_overlay_cb(overlay, context, timestamp, duration):
 #            tensor_filter framework=tensorflow2-lite model=/home/j/paarthurnax/g2/unet.tflite ! \
 #            tensor_sink name=tensor_sink'
 
+
 pipeline_str = \
     'filesrc location=/home/j/paarthurnax/g2/j_scan.mp4 ! \
     decodebin ! videoconvert ! videocrop top=490 bottom=360 left=900 right=990 ! \

@@ -5,8 +5,8 @@
 import os
 #os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 
-#os.environ["CUDA_VISIBLE_DEVICES"]="0"
-#os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 #os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 import gi
@@ -107,7 +107,10 @@ def draw_overlay_cb(overlay, context, timestamp, duration):
 #            tensor_converter ! tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
 #            tensor_filter framework=tensorflow2-lite model=/home/j/paarthurnax/g2/unet.tflite ! \
 #            tensor_sink name=tensor_sink'
+# input=3:128:128 
 
+
+    #tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
 pipeline_str = \
     'filesrc location=/home/j/paarthurnax/g2/j_scan.mp4 ! \
     decodebin ! videoconvert ! videocrop top=490 bottom=360 left=900 right=990 ! \
@@ -115,8 +118,8 @@ pipeline_str = \
     t_raw. ! queue ! videoconvert ! cairooverlay name=tensor_res ! ximagesink name=img_tensor \
     t_raw. ! queue leaky=2 max-size-buffers=2 ! videoscale ! video/x-raw,width=128,height=128! \
     tensor_converter ! \
-    tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
     tensor_transform mode=dimchg option=0:2 ! \
+    tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
     tensor_filter framework=tvm model=/home/j/paarthurnax/g2/unet_tvm_gpu.so input=128:128:3 inputtype=float32 custom=device:GPU,num_input_tensors:1 ! \
     tensor_sink name=tensor_sink'
 

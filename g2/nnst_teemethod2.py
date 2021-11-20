@@ -113,7 +113,7 @@ pipeline_str = \
         t_raw. ! queue ! videoconvert ! cairooverlay name=tensor_res ! ximagesink name=img_tensor \
         t_raw. ! queue leaky=2 max-size-buffers=2 ! videoscale ! video/x-raw,width=128,height=128 ! \
             tensor_converter ! tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
-            tensor_filter framework=tensorflow model=/home/j/paarthurnax/g2/my_model/saved_model.pb input=1:128:128:3 inputname=input_2 inputtype=float32 outputype=float32 outputname=conv2d_transpose_4! \
+            tensor_filter framework=tensorflow model=/home/j/paarthurnax/g2/frozen_models/frozen_graph.pb input=128:128:3 ! \
             tensor_sink name=tensor_sink'
 
 

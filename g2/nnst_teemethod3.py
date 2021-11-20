@@ -113,10 +113,9 @@ pipeline_str = \
     decodebin ! videoconvert ! videoscale ! video/x-raw,width=512,height=512,format=RGB ! tee name=t_raw \
     t_raw. ! queue ! videoconvert ! cairooverlay name=tensor_res ! ximagesink name=img_tensor \
     t_raw. ! queue ! videoscale ! video/x-raw,width=128,height=128 ! \
-    tensor_converter input-dim=1:3:256:256 ! tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
-    tensor_filter framework=tensorflow model=/home/j/paarthurnax/g2/new_model/saved_model.pb ! \
+    tensor_converter input-dim=128:128:3 ! tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
+    tensor_filter framework=tensorflow model=/home/j/paarthurnax/g2/frozen_models/frozen_graph.pb ! \
     tensor_sink name=tensor_sink'
-
 
 
 pipeline = Gst.parse_launch(pipeline_str)
