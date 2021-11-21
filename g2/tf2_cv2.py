@@ -4,19 +4,19 @@ import tensorflow as tf
 
 import time
 
-#tf.config.experimental.set_visible_devices([], 'GPU')
+tf.config.experimental.set_visible_devices([], 'GPU')
 print("visible_device", tf.config.get_visible_devices())
 
 
 #model = tf.keras.models.load_model('./face_unet.pb')
-model = tf.keras.models.load_model('./my_model.h5')
+model = tf.keras.models.load_model('./unet_512_keras.h5')
 #interpreter = tf.lite.Interpreter("./face_unet.tflite")
 #interpreter.allocate_tensors()
 #input_details = interpreter.get_input_details()
 #output_details = interpreter.get_output_details()
 
-height = 128 
-width = 128 
+height = 512 
+width = 512 
 #height = 256
 #width = 256
 #height = input_details[0]['shape'][1]
@@ -33,15 +33,15 @@ print(height, width)
 #interpreter.set_tensor(input_details[0]['index'], input_data)
 
 s_time = time.time()
-cap = cv2.VideoCapture("./face.mp4")
+cap = cv2.VideoCapture("./j_scan.mp4")
 fps = cap.get(cv2.CAP_PROP_FPS)
 print("fps of vid:", fps)
 g_cnt = 0
 while (cap.isOpened()):
     ret, frame = cap.read()
     try:
-        #frame = cv2.resize(frame[490:1800, 900:2850], (512,512))
-        frame = cv2.resize(frame, (512,512))
+        frame = cv2.resize(frame[490:1800, 900:2850], (512,512))
+        #frame = cv2.resize(frame, (512,512))
     except:
         print(frame, ret)
         break
@@ -52,13 +52,13 @@ while (cap.isOpened()):
 
     #th = cv2.resize(cv2.threshold(np.squeeze(output_data), 0.99, 1, cv2.THRESH_BINARY)[-1], (512,512))
     th = cv2.resize(cv2.threshold(np.squeeze(output_data), 0.99, 1, cv2.THRESH_BINARY)[-1], (512,512))
-    th = th[:,:,0]
+    #th = th[:,:,0]
     #print(frame.shape)
     img_in_rgb = frame
     #img_in_rgb = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
 
     print(th.shape, img_in_rgb.shape)
-    img_in_rgb[th == 0] = [0, 0, 255]
+    img_in_rgb[th == 1] = [0, 0, 255]
 
     #cv2.imshow("result", img_in_rgb)
     if ret:
