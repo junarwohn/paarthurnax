@@ -15,8 +15,8 @@ model = tf.keras.models.load_model('./unet_512_keras.h5')
 #input_details = interpreter.get_input_details()
 #output_details = interpreter.get_output_details()
 
-height = 512 
-width = 512 
+height = 512
+width = 512
 #height = 256
 #width = 256
 #height = input_details[0]['shape'][1]
@@ -37,8 +37,31 @@ cap = cv2.VideoCapture("./j_scan.mp4")
 fps = cap.get(cv2.CAP_PROP_FPS)
 print("fps of vid:", fps)
 g_cnt = 0
+prev_time = time.time()
+th = np.ones((512,512))
 while (cap.isOpened()):
+    #ret, frame = cap.read()
+    time_delta = time.time() - prev_time
+    frame_delta = int(time_delta * fps) 
+    #print(frame_delta)
     ret, frame = cap.read()
+    prev_time = time.time()
+    deley_pre_time = time.time()
+    for i in range( frame_delta ):
+        try:
+            frame = cv2.resize(frame[490:1800, 900:2850], (512,512))
+            img_in_rgb = frame
+            img_in_rgb[th == 1] = [0, 0, 255]
+            cv2.imshow("asda", img_in_rgb)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            ret, frame = cap.read()
+        except:
+            break
+
+
+
+    #ret, frame = cap.read()
     try:
         frame = cv2.resize(frame[490:1800, 900:2850], (512,512))
         #frame = cv2.resize(frame, (512,512))
@@ -57,7 +80,7 @@ while (cap.isOpened()):
     img_in_rgb = frame
     #img_in_rgb = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
 
-    print(th.shape, img_in_rgb.shape)
+    #print(th.shape, img_in_rgb.shape)
     img_in_rgb[th == 1] = [0, 0, 255]
 
     #cv2.imshow("result", img_in_rgb)

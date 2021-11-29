@@ -5,7 +5,7 @@
 import os
 #os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+#os.environ["CUDA_VISIBLE_DEVICES"]="0"
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 #os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
@@ -48,7 +48,7 @@ def new_data_cb(sink, buffer):
         g_data = mapinfo_content
         if result:
            content_arr = np.frombuffer(mapinfo_content.data, dtype=np.float32)
-           tensor_result = np.reshape(content_arr, (128, 128)) 
+           tensor_result = np.reshape(content_arr, (256, 256)) 
            g_tensor_result = tensor_result
            #cv2.imwrite('./result/img_{}.png'.format(g_cnt), np.reshape(content_arr, (-1, 128))*255)
            g_cnt += 1
@@ -71,6 +71,8 @@ def new_data_cb(sink, buffer):
 def draw_overlay_cb(overlay, context, timestamp, duration):
     global g_data
     print("draw_overlay_cb ", running)
+    if type(g_tensor_result) == type(0):
+        return
     print(g_tensor_result.shape)
     if running:
     #if running:
@@ -109,18 +111,23 @@ def draw_overlay_cb(overlay, context, timestamp, duration):
 #            tensor_sink name=tensor_sink'
 # input=3:128:128 
 
-
+# inputtype=float32
     #tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
+    #tensor_transform mode=dimchg option=0:2 ! \
+            #   input=512:512:3
+
+    #tensor_transform mode=dimchg option=0:2 ! \
+            #input=512:512:3
 pipeline_str = \
     'filesrc location=/home/j/paarthurnax/g2/j_scan.mp4 ! \
     decodebin ! videoconvert ! videocrop top=490 bottom=360 left=900 right=990 ! \
     videoscale ! video/x-raw,width=512,height=512,format=RGB ! tee name=t_raw \
     t_raw. ! queue ! videoconvert ! cairooverlay name=tensor_res ! ximagesink name=img_tensor \
-    t_raw. ! queue leaky=2 max-size-buffers=2 ! videoscale ! video/x-raw,width=128,height=128! \
+    t_raw. ! queue leaky=2 max-size-buffers=2 ! videoscale ! video/x-raw,format=RGB,width=512,height=512! \
     tensor_converter ! \
-    tensor_transform mode=dimchg option=0:2 ! \
     tensor_transform mode=arithmetic option=typecast:float32,div:255 ! \
-    tensor_filter framework=tvm model=/home/j/paarthurnax/g2/unet_tvm_gpu.so input=128:128:3 inputtype=float32 custom=device:GPU,num_input_tensors:1 ! \
+    tensor_transform mode=dimchg option=0:2 ! \
+    tensor_filter framework=tvm model=/home/j/paarthurnax/g2/unet_tvm_gpu_512.so input=512:512:3 inputtype=float32 custom=device:GPU,num_input_tensors:1 ! \
     tensor_sink name=tensor_sink'
 
 

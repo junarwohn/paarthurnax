@@ -45,13 +45,27 @@ fps = cap.get(cv2.CAP_PROP_FPS)
 print("fps of vid:", fps)
 g_cnt = 0
 prev_time = time.time()
+th = np.ones((512,512))
 while (cap.isOpened()):
     #ret, frame = cap.read()
     time_delta = time.time() - prev_time
+    frame_delta = int(time_delta * fps) 
+    #print(frame_delta)
     ret, frame = cap.read()
-    for i in range(int(time_delta * fps)):
-        ret, frame = cap.read()
     prev_time = time.time()
+    for i in range(int(time_delta * fps)):
+        try:
+            frame = cv2.resize(frame[490:1800, 900:2850], (512,512))
+            img_in_rgb = frame
+            img_in_rgb[th == 1] = [0, 0, 255]
+            cv2.imshow("asda", img_in_rgb)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            ret, frame = cap.read()
+        except:
+            break
+
+    #prev_time = time.time()
     try:
         frame = cv2.resize(frame[490:1800, 900:2850], (512,512))
         #frame = cv2.resize(frame, (512,512))
@@ -60,16 +74,11 @@ while (cap.isOpened()):
         break
     
     data = cv2.resize(frame, (height, width)) / 255
-    #print('input',data.shape)
-    #input_data = tvm.nd.array(data.astype(np.float32))
     input_data = tvm.nd.array(np.transpose(data, (2,0,1)).astype(np.float32))
     model.set_input('input_1', input_data)
     model.run()
     output_data = model.get_output(0).asnumpy()
-    #input_data = np.expand_dims(img, axis=0).astype(np.float32) / 255
-    #output_data = model(input_data)
 
-    #th = cv2.resize(cv2.threshold(np.squeeze(output_data), 0.99, 1, cv2.THRESH_BINARY)[-1], (512,512))
     th = cv2.resize(cv2.threshold(np.squeeze(output_data), 0.9, 1, cv2.THRESH_BINARY)[-1], (512,512))
     #th = th[:,:,0]
     #print(frame.shape)
