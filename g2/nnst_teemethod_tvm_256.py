@@ -30,22 +30,25 @@ Gst.init(sys.argv[1:])
 tensor_result = np.array([])
 g_cnt = 0
 g_data = 0
-g_buffer_content = 0
+# g_buffer_content = 0
 g_tensor_result = 0
 def new_data_cb(sink, buffer):
     global g_cnt
     global tensor_result
     global g_data
-    global g_buffer_content
+    # global g_buffer_content
     global g_tensor_result
     #print("new_data_cb : ", running)
     if running:
+        if buffer.n_memory() != 1:
+            return False
+    # if False:
         #print(buffer.n_memory())
         #buffer_content = buffer.get_memory(0)
         buffer_content = buffer.peek_memory(0)
-        g_buffer_content = buffer_content
+        # g_buffer_content = buffer_content
         result, mapinfo_content = buffer_content.map(Gst.MapFlags.READ)
-        #print(result, mapinfo_content)
+        # g_buffer_content = mapinfo_content
         g_data = mapinfo_content
         if result:
            content_arr = np.frombuffer(mapinfo_content.data, dtype=np.float32)
@@ -53,6 +56,7 @@ def new_data_cb(sink, buffer):
            g_tensor_result = tensor_result
            #cv2.imwrite('./result/img_{}.png'.format(g_cnt), np.reshape(content_arr, (-1, 128))*255)
            g_cnt += 1
+        buffer_content.unmap(mapinfo_content)
         # if result:
         #     if mapinfo_content.size == expected_size * 4:
         #         content_arr = np.frombuffer(mapinfo_content.data, dtype=data_type)
@@ -71,11 +75,16 @@ def new_data_cb(sink, buffer):
 
 def draw_overlay_cb(overlay, context, timestamp, duration):
     global g_data
+    global g_tensor_result
     #print("draw_overlay_cb ", running)
     #print(g_tensor_result.shape)
+    # if running:
+    # if False:
     if running:
-    #if running:
-        buf = (g_tensor_result > 0.5).astype(np.uint8) * 255
+        try:
+            buf = (g_tensor_result > 0.5).astype(np.uint8) * 255
+        except:
+            return
         context.set_source_rgb(1.0, 0, 0)
         #print("buf shape", buf.shape)
         buf = cv2.resize(buf, dsize=(512,512))
