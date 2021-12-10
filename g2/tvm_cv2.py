@@ -3,11 +3,10 @@ import tvm.relay as relay
 import tensorflow as tf
 import numpy as np
 import cv2
-
 import time
 
-tf.config.experimental.set_visible_devices([], 'GPU')
-print("visible_device", tf.config.get_visible_devices())
+#tf.config.experimental.set_visible_devices([], 'GPU')
+#print("visible_device", tf.config.get_visible_devices())
 
 lib = tvm.runtime.load_module("./unet_tvm_cpu_512.so")
 target = "llvm"

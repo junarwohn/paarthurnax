@@ -12,7 +12,8 @@ print("visible_device", tf.config.get_visible_devices())
 lib = tvm.runtime.load_module("./unet_tvm_cpu_512.so")
 target = "llvm"
 dev = tvm.cpu()
-model = tvm.contrib.graph_runtime.GraphModule(lib['default'](dev))
+#model = tvm.contrib.graph_runtime.GraphModule(lib['default'](dev))
+model = tvm.contrib.graph_executor.GraphModule(lib['default'](dev))
 
 
 #model = tf.keras.models.load_model('./face_unet.pb')
